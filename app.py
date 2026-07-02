@@ -108,7 +108,7 @@ except FileNotFoundError as e:
     )
     st.stop()
 
-tab_predict, tab_insights = st.tabs(["🔮 Predict Match", "Model Insights"])
+tab_predict, tab_insights = st.tabs(["Predict Match", "Model Insights"])
 
 
 with tab_predict:
