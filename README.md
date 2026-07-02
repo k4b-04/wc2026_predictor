@@ -11,5 +11,5 @@ A machine learning project to predict FIFA World Cup 2026 match outcomes.
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/wc2026_predictor.git
+git clone https://github.com/k4b-04/wc2026_predictor.git
 cd wc2026_predictor
