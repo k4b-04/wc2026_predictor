@@ -12,14 +12,14 @@ PROCESSED_DIR = BASE_DIR / "data" / "processed"
 MODELS_DIR = BASE_DIR / "models"
 
 FEATURE_COLS = [
-    # Rolling form (last 10 matches)
+    # Last 10 matches
     "home_avg_goals_scored", "home_avg_goals_conceded",
     "home_win_rate",         "home_draw_rate",
     "home_avg_points",       "home_clean_sheet_rate",
     "away_avg_goals_scored", "away_avg_goals_conceded",
     "away_win_rate",         "away_draw_rate",
     "away_avg_points",       "away_clean_sheet_rate",
-    # Current form (last 5 matches)
+    # Last 5 matches
     "home_form_points",       "home_form_goal_diff",
     "home_form_goals_scored", "home_form_goals_conceded",
     "away_form_points",       "away_form_goal_diff",
@@ -47,17 +47,12 @@ RESULT_LABELS = {
 }
 
 
-# RandomForest.predict() always picks the highest-probability class, which is rarely a draw
-# But, draws are genuinely common at around 24.7% of group stage matches
-# The draw margin corrects this without having to retrain the model
+# Probability margin for group stage matches: Draws get an 8% headroom
+DRAW_MARGIN_GROUP_STAGE = 0.08
 
-# Probability margin for group stage matches: Draws get a 10% headroom
-DRAW_MARGIN_GROUP_STAGE = 0.10
-
-# Probability margin for knockout matches: Draws get a 6% headroom
-# Draws are less common in knockouts given their conntext, at around 21.4%
-# Technically, knockout games never draw, but this model is predicting the 90-minute scoreline, which can end in a draw and lead to penalties
-DRAW_MARGIN_KNOCKOUT = 0.06
+# Zero Probability margin for knockout matches as walk-forward testing across 7 historical World Cups showed 0.06 performs worse than no margin at all
+# per-tournament sample (15-24 matches) is too small to trust a positive margin yet. Revisit once the 2026 knockout rounds are played
+DRAW_MARGIN_KNOCKOUT = 0.00
 
 
 def apply_draw_margin(proba_row: np.ndarray, classes: list, margin: float) -> str:
@@ -157,9 +152,6 @@ class WorldCupPredictor:
         }
 
     def get_h2h_stats(self, home_team: str, away_team: str) -> dict:
-        """
-        Fetch the most recent H2H feature row for this pair from features.csv. Extended to include h2h_avg_goal_diff, h2h_avg_total_goals, and h2h_days_since_last.
-        """
         direct = self.features[
             (self.features["home_team"] == home_team) &
             (self.features["away_team"] == away_team)
@@ -200,7 +192,6 @@ class WorldCupPredictor:
             r = reverse.sort_values("date").iloc[-1]
             candidates.append({
                 "date":                r["date"],
-                # Flip home/away perspective
                 "h2h_home_win_rate":   r["h2h_away_win_rate"],
                 "h2h_away_win_rate":   r["h2h_home_win_rate"],
                 "h2h_draw_rate":       r["h2h_draw_rate"],
@@ -222,9 +213,6 @@ class WorldCupPredictor:
         is_neutral: int = 1,
         is_knockout: int = 0,
     ) -> pd.DataFrame:
-        """
-        Build one ML-ready feature row for a selected match
-        """
         if home_team == away_team:
             raise ValueError("Home team and away team cannot be the same.")
 
@@ -253,7 +241,6 @@ class WorldCupPredictor:
     ) -> dict:
         """
         Predict outcome and score for a match.
-
         match_stage: "group" or "knockout". Controls which draw margin is applied 
         """
         if match_stage not in ("group", "knockout"):

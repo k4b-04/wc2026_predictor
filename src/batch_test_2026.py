@@ -24,14 +24,14 @@ MODELS_DIR = BASE_DIR / "models"
 sys.path.append(str(BASE_DIR / "src"))
 
 FEATURE_COLS = [
-    # Rolling form (last 10 matches)
+    # Last 10 matches
     "home_avg_goals_scored", "home_avg_goals_conceded",
     "home_win_rate",         "home_draw_rate",
     "home_avg_points",       "home_clean_sheet_rate",
     "away_avg_goals_scored", "away_avg_goals_conceded",
     "away_win_rate",         "away_draw_rate",
     "away_avg_points",       "away_clean_sheet_rate",
-    # Current form (last 5 matches)
+    # Last 5 matches
     "home_form_points",       "home_form_goal_diff",
     "home_form_goals_scored", "home_form_goals_conceded",
     "away_form_points",       "away_form_goal_diff",
@@ -54,9 +54,9 @@ FEATURE_COLS = [
 
 RESULT_LABELS = {"H": "Home Win", "D": "Draw", "A": "Away Win"}
 
-# See predictor.py for the full rationale of draw margins
-DRAW_MARGIN_GROUP_STAGE = 0.10
-DRAW_MARGIN_KNOCKOUT = 0.06
+
+DRAW_MARGIN_GROUP_STAGE = 0.08
+DRAW_MARGIN_KNOCKOUT = 0.00
 
 
 def apply_draw_margin(proba_row: np.ndarray, classes: list, margin: float) -> str:
